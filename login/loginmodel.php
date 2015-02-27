@@ -9,21 +9,33 @@ class LoginModel {
 		$this->password = $password;
 	}
 	public function authorize() {
-		$dbc = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
-		or die ('Error connecting DB');
+		$dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME;
+		try {
+			$dbh = new PDO($dsn, DB_USER, DB_PASS);
+			$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		} catch (PDOException $e) {
+			echo 'Error connecting db: ' . $e->getMessage();
+		}
+		$statement = 'SELECT * FROM blogadmin where username = ? AND password = ?';
 		
-		$query = "SELECT * FROM blogadmin where username = '$this->username' AND password = SHA('$this->password')";
-		$result = mysqli_query($dbc, $query)
-		or die('Error querying server');
+		$stmt = $dbh->prepare($statement);
+		$stmt->bindParam(1, $username);
+		$stmt->bindParam(2, $password);
+		$username = $this->username;
+		$password = sha1($this->password);
+		$stmt->execute();
 		
-		if(mysqli_num_rows($result) == 1) {
-			$this->start_session($result);
+		if($stmt->rowCount() == 1) {
+			$this->start_session($stmt);
 			return true;
+		} else {
+			echo 'Im here';
+			echo $username . '<br>' . $password;
 		}
 		return false;
 	}
-	private function start_session($result) {
-		$row = mysqli_fetch_array($result);
+	private function start_session($stmt) {
+		$row = $stmt->fetch();
 		$_SESSION['user_id'] = $row['user_id'];
 		$_SESSION['username'] = $row['username'];
 		setcookie('user_id', $row['user_id'], time() + (7 * 24 * 3600));

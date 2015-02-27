@@ -32,7 +32,7 @@ class Article {
 	}
 	
 	function set_title($title) {
-		$this->title = $this->secure($title);
+		$this->title = trim($title);
 	}
 	
 	function get_title() {
@@ -40,7 +40,7 @@ class Article {
 	}
 	
 	function set_content($content) {
-		$formated_content = $this->secure($content);
+		$formated_content = trim($content);
 		$formated_content = $this->html_format($formated_content);
 		$this->content = $formated_content;
 	}
@@ -64,14 +64,6 @@ class Article {
 		$this->title = $title;
 		$this->content = $content;
 		$this->date_posted = $date_posted;
-	}
-	
-	private function secure($string) {
-		$dbc = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
-		or die('Error querying server.');
-		$str = mysqli_real_escape_string($dbc, trim($string));
-		mysqli_close($dbc);
-		return $str;
 	}
 	
 	private function html_format($content) {
